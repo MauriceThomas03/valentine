@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Special Message ♥</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-color: #f5576c;
+            --text-color: #c2185b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            background: var(--bg-gradient);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 1s ease;
+        }
+
+        .floating-bg, .fireworks-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .float-item { position: absolute; font-size: 25px; animation: float-up 8s infinite ease-in; opacity: 0; }
+        
+        @keyframes float-up {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .firework {
+            position: absolute; width: 5px; height: 5px; border-radius: 50%;
+            box-shadow: 0 0 10px 5px white; animation: explode 1s ease-out forwards;
+        }
+        @keyframes explode { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(20); opacity: 0; } }
+
+        /* Envelope */
+        .envelope-wrapper { position: relative; z-index: 10; transition: all 1s ease; }
+        .envelope-wrapper.opened { transform: scale(0.8); opacity: 0; pointer-events: none; position: absolute; }
+        .envelope { position: relative; width: 300px; height: 200px; cursor: pointer; transition: transform 0.3s ease; }
+        .envelope-base { position: absolute; width: 100%; height: 100%; background: #fff; border-radius: 5px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .envelope-flap { 
+            position: absolute; width: 0; height: 0; 
+            border-left: 150px solid transparent; border-right: 150px solid transparent; 
+            border-top: 100px solid #ffcccb; top: 0; z-index: 3;
+            transform-origin: top center; transition: transform 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .envelope-wrapper.opening .envelope-flap { transform: rotateX(180deg); }
+        .envelope-front { 
+            position: absolute; width: 0; height: 0; 
+            border-left: 150px solid transparent; border-right: 150px solid transparent; 
+            border-bottom: 100px solid #ff9999; bottom: 0; z-index: 2; 
+        }
+
+        /* Card Container */
+        .card-container {
+            display: none;
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            z-index: 100;
+            min-height: 400px;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide { display: none; opacity: 0; transform: translateY(30px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .slide.active { display: block; opacity: 1; transform: translateY(0); }
+        .slide.exit { display: block; opacity: 0; transform: translateY(-30px); }
+
+        h1 { font-size: 28px; color: var(--text-color); margin-bottom: 15px; font-family: 'Brush Script MT', cursive; }
+        p { font-size: 17px; color: #444; line-height: 1.5; margin-bottom: 20px; }
+
+        .btn-choice {
+            background: white; border: 2px solid var(--accent-color);
+            padding: 8px 15px; margin: 5px; border-radius: 15px;
+            cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .btn-choice:hover { background: var(--accent-color); color: white; }
+
+        .next-btn {
+            background: var(--accent-color); color: white; border: none; padding: 12px 25px;
+            border-radius: 20px; cursor: pointer; font-size: 16px; transition: 0.3s;
+        }
+
+        /* Slideshow */
+        .slideshow-container { position: relative; width: 100%; height: 250px; margin-bottom: 20px; border-radius: 15px; overflow: hidden; background: #eee; }
+        .slideshow-img { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease-in-out; left: 0; top: 0; }
+        .slideshow-img.visible { opacity: 1; }
+
+        .pulse-heart { font-size: 40px; animation: heartBeat 1s infinite; margin: 10px 0; display: inline-block; }
+        @keyframes heartBeat { 0%, 60%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+
+        .buttons-wrap { position: relative; min-height: 80px; margin-top: 20px; display: flex; justify-content: center; gap: 20px; transition: opacity 0.5s ease; }
+        .btn-final { padding: 12px 30px; font-size: 18px; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
+        .btn-yes { background: var(--accent-color); color: white; }
+        .btn-no { background: #a8a8a8; color: white; }
+
+        .reaction-image { display: none; max-width: 180px; margin: 10px auto; border-radius: 15px; }
+        .reaction-image.visible { display: block; }
+        
+        .success-message { 
+            display: none; 
+            opacity: 0; 
+            transform: scale(0.8); 
+            transition: all 0.8s ease; 
+            font-size: 22px; 
+            color: var(--text-color); 
+            margin-top: 15px; 
+        }
+        .success-message.visible { display: block; opacity: 1; transform: scale(1); }
+
+        .personal-note {
+            font-size: 14px; color: #666; margin-top: 20px; padding-top: 15px;
+            border-top: 1px dashed #ccc; font-style: italic; line-height: 1.4; text-align: left;
+        }
+
+        .confetti { position: fixed; width: 10px; height: 10px; top: -10px; z-index: 1000; animation: confetti-fall 3s linear; }
+        @keyframes confetti-fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="floating-bg" id="floatingBg"></div>
+    <div class="fireworks-container" id="fireworksContainer"></div>
+
+    <audio id="loveSong" preload="auto" playsinline>
+        <source src="https://www.dropbox.com/scl/fi/d3mlhc1jv0hbhh9s5kxoh/Gunna_Ft_Burna_Boy_-_WGFT.mp3?rlkey=gatzsli1wgih34uqm9eayo6xw&st=0z30skde&raw=1" type="audio/mpeg">
+    </audio>
+
+    <div class="envelope-wrapper" id="envelopeWrapper">
+        <div class="envelope" onclick="openEnvelope()">
+            <div class="envelope-base"></div>
+            <div class="envelope-flap"></div>
+            <div class="envelope-front"></div>
+            <div class="letter" style="position:absolute; top:20px; left:20px; width:260px; height:160px; background:white; display:flex; flex-direction:column; justify-content:center; align-items:center; border-radius:5px; z-index:1;">
+                <p style="color:#c2185b; text-align:center; font-style:italic; padding:10px;">
+                    "You received a special message from yours truly"
+                </p>
+                <span style="font-size:12px; color:#880e4f;">Click to open ♥</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-container" id="cardContainer">
+        
+        <div class="slide active" id="slide1">
+            <h1>First things first...</h1>
+            <p>What is your favorite color? <br><small>(I already know, just choose!)</small></p>
+            <div id="colorChoices">
+                <button class="btn-choice" onclick="changeTheme('#808080', '#d3d3d3')">Grey</button>
+                <button class="btn-choice" onclick="changeTheme('#a18cd1', '#fbc2eb')">Purple</button>
+                <button class="btn-choice" onclick="changeTheme('#2ecc71', '#a8e063')">Green</button>
+                <button class="btn-choice" onclick="changeTheme('#3498db', '#8fd3f4')">Blue</button>
+                <button class="btn-choice" onclick="changeTheme('#e74c3c', '#ff5f6d')">Red</button>
+            </div>
+        </div>
+
+        <div class="slide" id="slide2">
+            <h1>Setting the mood...</h1>
+            <p>Which do you prefer to see floating around?</p>
+            <button class="btn-choice" onclick="setAnimation(['🌸'])">Flowers 🌸</button>
+            <button class="btn-choice" onclick="setAnimation(['❤️'])">Hearts ❤️</button>
+            <button class="btn-choice" onclick="setAnimation(['🌸', '❤️'])">Both! ✨</button>
+        </div>
+
+        <div class="slide" id="slide3">
+            <h1>Jasmine...</h1>
+            <p>I wanted to take a second to tell you how much you mean to me. You have this way of making everything better just by being there.</p>
+            <button class="next-btn" onclick="nextSlide(4)">Next ♥</button>
+        </div>
+
+        <div class="slide" id="slide4">
+            <h1>You're Incredible</h1>
+            <p>Your smile, your energy, and the way you care about people... it's honestly my favorite thing. I feel lucky every day that I get to call you my lover.</p>
+            <button class="next-btn" onclick="nextSlide(5)">One more thing... ♥</button>
+        </div>
+
+        <div class="slide" id="slide5">
+            <h1>A little reminder...</h1>
+            <p>We've been together for almost half a decade now, and it’s crazy how I still love you the same way, if not more every single day.</p>
+            <button class="next-btn" onclick="nextSlide(6)">Ready for the big question? ♥</button>
+        </div>
+
+        <div class="slide" id="slide6">
+            <h1>And so...</h1>
+            <p>Because you're so special, I wanted to ask you something I've been thinking about for a while.</p>
+            <button class="next-btn" onclick="startCountdown()">Are you ready? ♥</button>
+        </div>
+
+        <div class="slide" id="slideWait">
+            <div class="slideshow-container">
+                <img src="https://i.imgur.com/8d3MGSs.jpg" class="slideshow-img visible">
+                <img src="https://i.imgur.com/tymqPw1.jpg" class="slideshow-img">
+                <img src="https://i.imgur.com/7odFBEx.jpg" class="slideshow-img">
+            </div>
+            <div class="pulse-heart">❤️</div>
+            <h1 id="waitText">Syncing our vibes...</h1>
+        </div>
+
+        <div class="slide" id="slideFinal">
+            <div id="finalContent">
+                <h1>Will You Be My Valentine?</h1>
+                <p>Jasmine Hayes, what do you say?</p>
+                
+                <img src="https://i.imgur.com/yKqUMiu.gif" class="reaction-image" id="noImage">
+
+                <div class="buttons-wrap" id="buttonContainer">
+                    <button class="btn-final btn-yes" onclick="sayYes()">Yes! ♥</button>
+                    <button class="btn-final btn-no" id="noButton" onmouseover="moveButton()" ontouchstart="moveButton()">No</button>
+                </div>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <img src="https://i.imgur.com/kl8PTB7.gif" class="reaction-image visible" style="display:block;">
+                
+                🎉 AYYY! I LOVE YA GIRL 🎉
+                <p class="personal-note">
+                    I wasn't doing homework btw, I was writing this code to make this. Yk I hate coding and shit, but I wanted to be different since we long distance. I love ya.
+                </p>
+                <div style="font-size: 14px; margin-top: 10px; font-weight: bold;">- Yours truly, Your knight in shining armor</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentEmojis = ['❤️'];
+        let animationInterval;
+        let noHoverCount = 0;
+        let slideshowInterval;
+
+        function createFloatingItems() {
+            if (animationInterval) clearInterval(animationInterval);
+            const container = document.getElementById('floatingBg');
+            animationInterval = setInterval(() => {
+                const item = document.createElement('div');
+                item.className = 'float-item';
+                item.textContent = currentEmojis[Math.floor(Math.random() * currentEmojis.length)];
+                item.style.left = Math.random() * 100 + '%';
+                item.style.animationDuration = (Math.random() * 3 + 5) + 's';
+                container.appendChild(item);
+                setTimeout(() => item.remove(), 8000);
+            }, 300);
+        }
+
+        function createFirework() {
+            const container = document.getElementById('fireworksContainer');
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            const colors = ['#ff6b9d', '#ffa502', '#2ecc71', '#3498db'];
+            firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            firework.style.left = Math.random() * 100 + '%';
+            firework.style.top = Math.random() * 100 + '%';
+            container.appendChild(firework);
+            setTimeout(() => firework.remove(), 1000);
+        }
+
+        function openEnvelope() {
+            // PRIMING AUDIO: This allows the song to play later on mobile/Chrome
+            const song = document.getElementById('loveSong');
+            song.play().then(() => {
+                song.pause();
+                song.currentTime = 0;
+            }).catch(e => console.log("Audio prepared"));
+
+            document.getElementById('envelopeWrapper').classList.add('opening');
+            setTimeout(() => {
+                document.getElementById('envelopeWrapper').classList.add('opened');
+                document.getElementById('cardContainer').style.display = 'flex';
+                setTimeout(() => document.getElementById('slide1').classList.add('active'), 50);
+            }, 1200);
+        }
+
+        function changeTheme(c1, c2) {
+            document.body.style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+            document.documentElement.style.setProperty('--accent-color', c1);
+            nextSlide(2);
+        }
+
+        function setAnimation(emojiArray) {
+            currentEmojis = emojiArray;
+            createFloatingItems();
+            nextSlide(3);
+        }
+
+        function nextSlide(num) {
+            const current = document.querySelector('.slide.active');
+            const targetId = num === 'final' ? 'slideFinal' : (num === 'wait' ? 'slideWait' : 'slide' + num);
+            const next = document.getElementById(targetId);
+
+            if (current) {
+                current.classList.add('exit');
+                current.classList.remove('active');
+                setTimeout(() => {
+                    current.classList.remove('exit');
+                    current.style.display = 'none';
+                    next.style.display = 'block';
+                    next.offsetHeight; 
+                    next.classList.add('active');
+                }, 500); 
+            } else {
+                next.style.display = 'block';
+                next.classList.add('active');
+            }
+        }
+
+        function startCountdown() {
+            nextSlide('wait');
+            const imgs = document.querySelectorAll('.slideshow-img');
+            let imgIdx = 0;
+            slideshowInterval = setInterval(() => {
+                imgs[imgIdx].classList.remove('visible');
+                imgIdx = (imgIdx + 1) % imgs.length;
+                imgs[imgIdx].classList.add('visible');
+            }, 1500);
+
+            const phrases = ["3...", "2...", "1...", "Syncing our moments..."];
+            let i = 0;
+            const textInterval = setInterval(() => {
+                if (i < phrases.length) {
+                    document.getElementById('waitText').innerText = phrases[i];
+                    i++;
+                } else {
+                    clearInterval(textInterval);
+                    clearInterval(slideshowInterval);
+                    nextSlide('final');
+                }
+            }, 1800);
+        }
+
+        function moveButton() {
+            const noBtn = document.getElementById('noButton');
+            const noImg = document.getElementById('noImage');
+            noHoverCount++; 
+            if (noHoverCount >= 3) { noImg.classList.add('visible'); }
+            const randomX = (Math.random() - 0.5) * 150;
+            const randomY = (Math.random() - 0.5) * 100;
+            noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        }
+
+        function sayYes() {
+            const finalContent = document.getElementById('finalContent');
+            const successMessage = document.getElementById('successMessage');
+            const song = document.getElementById('loveSong');
+            
+            finalContent.style.transition = "opacity 0.8s ease, transform 0.8s ease";
+            finalContent.style.opacity = "0";
+            finalContent.style.transform = "translateY(-20px)";
+
+            setTimeout(() => {
+                finalContent.style.display = 'none';
+                successMessage.style.display = 'block';
+                setTimeout(() => {
+                    successMessage.classList.add('visible');
+                }, 50);
+
+                // PLAYING THE SONG
+                song.play().catch(error => console.log("Playback failed:", error));
+                
+                setInterval(createFirework, 200);
+                createConfetti();
+            }, 800);
+        }
+
+        function createConfetti() {
+            const colors = ['#fff', '#ff6b9d', '#ffa502'];
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + '%';
+                    c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 3000);
+                }, i * 30);
+            }
+        }
+        createFloatingItems();
+    </script>
+</body>
+</html>
